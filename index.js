@@ -24,5 +24,5 @@ app.get("/", (req, res) => res.send("Bot is running!"));
 connectDb();
 // Start Server
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port : ${PORT}`);
 });
