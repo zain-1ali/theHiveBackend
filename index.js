@@ -16,7 +16,7 @@ app.use(ErrorMiddleware);
 
 // Routes
 // app.use(`/bot${process.env.BOT_TOKEN}`, botRoutes);
-app.use(`/api/webhook`, botRoutes);
+app.use(`/`, botRoutes);
 
 // Health Check
 app.get("/", (req, res) => res.send("Bot is running!"));
