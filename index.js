@@ -13,14 +13,14 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 app.use(ErrorMiddleware);
-connectDb();
+
 // Routes
 // app.use(`/bot${process.env.BOT_TOKEN}`, botRoutes);
 app.use(`/api/webhook`, botRoutes);
 
 // Health Check
 app.get("/", (req, res) => res.send("Bot is running!"));
-
+connectDb();
 // Start Server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
