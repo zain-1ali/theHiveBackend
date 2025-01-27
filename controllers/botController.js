@@ -14,6 +14,8 @@ exports.handleUpdate = async (req, res) => {
 
 // /start command handler
 bot.onText(/\/start(.*)/, async (msg, match) => {
+  console.log(msg.from.first_name);
+
   const userId = msg.from.id.toString();
   const userFirstName = msg.from.first_name || "User";
   const userLastName = msg.from.last_name || "";
@@ -29,7 +31,6 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
   try {
     let user = await User.findOne({ telegramId: userId });
 
-    
     if (!user) {
       //   let userImage = null;
 
@@ -81,8 +82,7 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
         }
       }
 
-
-      console.log(userData)
+      console.log(userData);
       user = new User(userData);
       await user.save();
     }
