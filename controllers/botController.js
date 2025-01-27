@@ -93,7 +93,7 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
           [
             {
               text: "Open hive App",
-              web_app: { url: "https://radiant-rabanadas-d68427.netlify.app/" },
+              web_app: { url: "https://radiant-rabanadas-d68427.netlify.app" },
             },
           ],
         ],
