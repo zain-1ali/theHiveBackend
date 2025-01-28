@@ -4,6 +4,9 @@ exports.userAuthenticator = async (req, res, next) => {
   const { userTelegramData } = req.body;
 
   try {
+    if (!userTelegramData?.telegramId) {
+      return res.status(400).json({ message: "Invalid user data" });
+    }
     let user = await User.findOne({ telegramId: userTelegramData?.telegramId });
 
     if (!user) {
@@ -49,6 +52,6 @@ exports.userAuthenticator = async (req, res, next) => {
     }
   } catch (error) {
     console.error("Error processing /start command:", error);
-    res.status(500).json({ message: "Error processing /start command" });
+    res.status(500).json({ message: "Error. Please try again!", error });
   }
 };
