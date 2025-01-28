@@ -21,13 +21,13 @@ exports.userAuthenticator = async (req, res, next) => {
     }
     let user = await User.findOne({ telegramId: userTelegramData?.telegramId });
 
-    if (!user) {
+    if (!user){
       const userData = {
         telegramId: userTelegramData?.telegramId,
-        firstName: userTelegramData?.userFirstName,
-        lastName: userTelegramData?.userLastName,
-        username: userTelegramData?.userUsername,
-        languageCode: userTelegramData?.userLanguageCode,
+        firstName: userTelegramData?.firstName,
+        lastName: userTelegramData?.lastName,
+        username: userTelegramData?.username,
+        languageCode: userTelegramData?.languageCode,
         isPremium: userTelegramData?.isPremium,
         userImage: "",
         referredBy: userTelegramData?.refCode || null,
