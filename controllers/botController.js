@@ -48,15 +48,6 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
         username: userUsername,
         languageCode: userLanguageCode,
         isPremium,
-        referrals: {},
-        balance: 0,
-        mineRate: 0.001,
-        isMining: false,
-        miningStartedTime: null,
-        daily: {
-          claimedTime: null,
-          claimedDay: 0,
-        },
         userImage: "",
         referredBy: refCode || null,
       };
