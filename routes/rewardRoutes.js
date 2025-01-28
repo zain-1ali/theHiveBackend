@@ -9,7 +9,7 @@ const {
 const router = express.Router();
 
 router.post("/claim", claimPollens);
-router.get("/progress/:userId", getProgress);
+router.get("/progress/:telegramId", getProgress);
 router.post("/reset", resetProgress);
 router.post("/check-and-reset", checkAndResetIfDayMissed);
 
