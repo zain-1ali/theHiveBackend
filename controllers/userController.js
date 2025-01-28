@@ -1,11 +1,23 @@
 const User = require("../models/User");
 
 exports.userAuthenticator = async (req, res, next) => {
-  const { userTelegramData } = req.body;
+  const { telegramId, firstName, lastName, username, languageCode, isPremium } =
+    req.body;
+
+  const userTelegramData = {
+    telegramId,
+    firstName,
+    lastName,
+    username,
+    languageCode,
+    isPremium,
+  };
 
   try {
     if (!userTelegramData?.telegramId) {
-      return res.status(400).json({ message: "Invalid user data" });
+      return res
+        .status(400)
+        .json({ message: "Invalid user data", userTelegramData });
     }
     let user = await User.findOne({ telegramId: userTelegramData?.telegramId });
 
