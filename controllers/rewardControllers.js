@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const { hasDayPassed } = require("../utils/dateHelper");
+const { getPercentage } = require("../utils/returnPercentage");
 
 const rewards = [500, 550, 550, 600, 650, 650, 1000];
 exports.claimPollens = async (req, res) => {
@@ -31,26 +32,40 @@ exports.claimPollens = async (req, res) => {
     user.lastClaimed = now;
     await user.save();
 
-    res.json({
+    if (user.referredBy) {
+      const refrreReward = user.isPremium
+        ? getPercentage(rewards[user.day - 1], 20)
+        : getPercentage(rewards[user.day - 1], 10);
+      await User.findOneAndUpdate(
+        { telegramId: user.referredBy },
+        { $inc: { pollens: refrreReward } }
+      );
+    }
+
+    res.status(200).json({
       message: `You have claimed ${rewards[user.day - 1]} pollens!`,
       pollens: user.pollens,
+      claimedPollens: rewards[user.day - 1],
+      success: true,
     });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ message: "An error occurred while claiming pollens." });
+    res.status(500).json({
+      message: "An error occurred while claiming pollens.",
+      success: false,
+    });
   }
 };
 
 exports.getProgress = async (req, res) => {
   const { telegramId } = req.params;
-
   try {
     const user = await User.findOne({ telegramId });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found.",success:false });
+      return res
+        .status(404)
+        .json({ message: "User not found.", success: false });
     }
 
     res.json({
@@ -105,7 +120,6 @@ exports.checkAndResetIfDayMissed = async (req, res) => {
 
     const now = new Date();
 
-    // Check if a day has passed but the user did not claim rewards
     if (
       hasDayPassed(user.lastClaimed) &&
       now - user.lastClaimed >= 2 * 86400000
@@ -128,5 +142,47 @@ exports.checkAndResetIfDayMissed = async (req, res) => {
     res.status(500).json({
       message: "An error occurred while checking and resetting progress.",
     });
+  }
+};
+
+exports.checkRewardClaimedToday = async (req, res) => {
+  const { telegramId } = req.params;
+
+  try {
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    const now = new Date();
+    const lastClaimed = new Date(user.lastClaimed);
+
+    if (
+      now.getDate() === lastClaimed.getDate() &&
+      now.getMonth() === lastClaimed.getMonth() &&
+      now.getFullYear() === lastClaimed.getFullYear()
+    ) {
+      return res.json({
+        claimedToday: true,
+        message: "You have already claimed today's reward.",
+        day: user.day,
+        pollens: user.pollens,
+        lastClaimed: user.lastClaimed,
+      });
+    }
+
+    res.json({
+      claimedToday: false,
+      message: "You have not claimed today's reward yet.",
+      day: user.day,
+      pollens: user.pollens,
+      lastClaimed: user.lastClaimed,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while checking today’s reward." });
   }
 };
