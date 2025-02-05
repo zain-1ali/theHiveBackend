@@ -27,7 +27,7 @@ exports.claimPollens = async (req, res) => {
     }
 
     // Increment the day and add pollens
-    user.day = (user.day % 7) + 1;
+    // user.day = (user.day % 7) + 1;
     user.pollens += rewards[user.day - 1];
     user.lastClaimed = now;
     await user.save();
