@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
   userImage: { type: String, default: null },
   lastClaimed: { type: Date, default: null },
   day: { type: Number, default: 1 },
+  dayUpdatedAt: { type: Date, default: null },
   pollens: { type: Number, default: 0 },
 });
 

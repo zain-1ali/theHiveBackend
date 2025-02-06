@@ -233,52 +233,61 @@ exports.checkAndUpdateDay = async (req, res) => {
   }
 };
 
-// exports.checkAndUpdateRewardStatus = async (req, res) => {
-//   const { telegramId } = req.params;
+exports.checkAndUpdateRewardStatus = async (req, res) => {
+  const { telegramId } = req.params;
 
-//   try {
-//     const user = await User.findOne({ telegramId });
+  try {
+    const user = await User.findOne({ telegramId });
 
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found." });
-//     }
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
 
-//     const now = new Date();
-//     const lastClaimed = new Date(user.lastClaimed);
-//     let claimedToday = false;
-//     if (
-//       now.getDate() === lastClaimed.getDate() &&
-//       now.getMonth() === lastClaimed.getMonth() &&
-//       now.getFullYear() === lastClaimed.getFullYear()
-//     ) {
-//       claimedToday = true;
-//     } else {
-//       if (now - lastClaimed >= 2 * 86400000) {
-//         user.day = 1;
-//         user.lastClaimed = null;
-//       } else {
-//         user.day = user.day === 7 ? 1 : (user.day % 7) + 1;
-//       }
-//       await user.save();
-//     }
+    const now = new Date();
+    const lastClaimed = new Date(user.lastClaimed);
+    const dayUpdatedAt = new Date(user.dayUpdatedAt);
+    let claimedToday = false;
+    if (
+      now.getDate() === lastClaimed.getDate() &&
+      now.getMonth() === lastClaimed.getMonth() &&
+      now.getFullYear() === lastClaimed.getFullYear()
+    ) {
+      claimedToday = true;
+    } else {
+      if (now - lastClaimed >= 2 * 86400000) {
+        user.day = 1;
+        user.dayUpdatedAt = null;
+        user.lastClaimed = null;
+      } else {
+        if (
+          now.getDate() != dayUpdatedAt.getDate() ||
+          now.getMonth() != dayUpdatedAt.getMonth() ||
+          now.getFullYear() != dayUpdatedAt.getFullYear()
+        ) {
+          user.day = user.day === 7 ? 1 : (user.day % 7) + 1;
+          user.dayUpdatedAt = now;
+        }
+      }
+      await user.save();
+    }
 
-//     res.json({
-//       claimedToday,
-//       message: claimedToday
-//         ? "You have already claimed today's reward."
-//         : "You have not claimed today's reward yet.",
-//       day: user.day,
-//       pollens: user.pollens,
-//       lastClaimed: user.lastClaimed,
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({
-//       message:
-//         "An error occurred while checking and updating the reward status.",
-//     });
-//   }
-// };
+    res.json({
+      claimedToday,
+      message: claimedToday
+        ? "You have already claimed today's reward."
+        : "You have not claimed today's reward yet.",
+      day: user.day,
+      pollens: user.pollens,
+      lastClaimed: user.lastClaimed,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message:
+        "An error occurred while checking and updating the reward status.",
+    });
+  }
+};
 
 exports.checkAndUpdateRewardStatus = async (req, res) => {
   const { telegramId } = req.params;
