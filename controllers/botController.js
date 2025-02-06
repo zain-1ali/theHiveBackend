@@ -55,16 +55,27 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
       if (refCode) {
         const referrer = await User.findOne({ telegramId: refCode });
         if (referrer) {
-         
-          
-          
-          await referrer.save();
+          const refrreReward = isPremium ? 5000 : 500;
+          await User.findOneAndUpdate(
+            { telegramId: refCode },
+            { $inc: { pollens: refrreReward } }
+          );
+
+          const historyData = {
+            type: "pollens",
+            reward: refrreReward,
+            userId: userId,
+            refererId: refCode,
+            message: "accepted your invite",
+          };
+
+          const history = new History(historyData);
+          await history.save();
+
         } else {
           userData.referredBy = null;
         }
       }
-
-      console.log(userData);
       user = new User(userData);
       await user.save();
     }
