@@ -289,50 +289,50 @@ exports.checkAndUpdateRewardStatus = async (req, res) => {
   }
 };
 
-exports.checkAndUpdateRewardStatus = async (req, res) => {
-  const { telegramId } = req.params;
+// exports.checkAndUpdateRewardStatus = async (req, res) => {
+//   const { telegramId } = req.params;
 
-  try {
-    const user = await User.findOne({ telegramId });
+//   try {
+//     const user = await User.findOne({ telegramId });
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found." });
+//     }
 
-    const now = new Date();
-    const lastClaimed = new Date(user.lastClaimed);
+//     const now = new Date();
+//     const lastClaimed = new Date(user.lastClaimed);
 
-    // Normalize both dates to midnight (ignore time portion)
-    const todayMidnight = new Date(now).setHours(0, 0, 0, 0);
-    const lastClaimedMidnight = new Date(lastClaimed).setHours(0, 0, 0, 0);
+//     // Normalize both dates to midnight (ignore time portion)
+//     const todayMidnight = new Date(now).setHours(0, 0, 0, 0);
+//     const lastClaimedMidnight = new Date(lastClaimed).setHours(0, 0, 0, 0);
 
-    let claimedToday = todayMidnight === lastClaimedMidnight;
+//     let claimedToday = todayMidnight === lastClaimedMidnight;
 
-    // Only update if a new day has started
-    if (!claimedToday) {
-      if (todayMidnight - lastClaimedMidnight >= 2 * 86400000) {
-        user.day = 1; // Missed a day, reset to day 1
-      } else {
-        user.day = user.day === 7 ? 1 : user.day + 1; // Move to the next day, reset if day 7
-      }
-      user.lastClaimed = now;
-      await user.save();
-    }
+//     // Only update if a new day has started
+//     if (!claimedToday) {
+//       if (todayMidnight - lastClaimedMidnight >= 2 * 86400000) {
+//         user.day = 1; // Missed a day, reset to day 1
+//       } else {
+//         user.day = user.day === 7 ? 1 : user.day + 1; // Move to the next day, reset if day 7
+//       }
+//       user.lastClaimed = now;
+//       await user.save();
+//     }
 
-    res.json({
-      claimedToday,
-      message: claimedToday
-        ? "You have already claimed today's reward."
-        : "You have not claimed today's reward yet.",
-      day: user.day,
-      pollens: user.pollens,
-      lastClaimed: user.lastClaimed,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message:
-        "An error occurred while checking and updating the reward status.",
-    });
-  }
-};
+//     res.json({
+//       claimedToday,
+//       message: claimedToday
+//         ? "You have already claimed today's reward."
+//         : "You have not claimed today's reward yet.",
+//       day: user.day,
+//       pollens: user.pollens,
+//       lastClaimed: user.lastClaimed,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({
+//       message:
+//         "An error occurred while checking and updating the reward status.",
+//     });
+//   }
+// };
