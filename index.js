@@ -8,6 +8,7 @@ const { connectDb } = require("./utils/db");
 const cors = require("cors");
 const rewardsRoutes = require("./routes/rewardRoutes");
 const userRoutes = require("./routes/userRoutes");
+const historyRoutes = require("./routes/historyRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,6 +32,7 @@ app.use(ErrorMiddleware);
 app.use(`/api/webhook`, botRoutes);
 app.use(`/api/rewards`, rewardsRoutes);
 app.use(`/api/user`, userRoutes);
+app.use(`/api/history`, historyRoutes);
 
 // Health Check
 app.get("/", (req, res) => res.send("Bot is running!"));
