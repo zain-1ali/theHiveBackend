@@ -55,18 +55,9 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
       if (refCode) {
         const referrer = await User.findOne({ telegramId: refCode });
         if (referrer) {
-          const bonusAmount = 100;
-          //   isPremium ? 500 :
-          //   100;
-
-          // Update referrer's balance and referrals
-          referrer.balance += bonusAmount;
-          referrer.referrals.set(userId, {
-            addedValue: bonusAmount,
-            firstName: userFirstName,
-            lastName: userLastName,
-            userImage,
-          });
+         
+          
+          
           await referrer.save();
         } else {
           userData.referredBy = null;

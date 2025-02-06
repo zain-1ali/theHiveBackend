@@ -1,3 +1,4 @@
+const History = require("../models/History");
 const User = require("../models/User");
 const { hasDayPassed } = require("../utils/dateHelper");
 const { getPercentage } = require("../utils/returnPercentage");
@@ -40,6 +41,17 @@ exports.claimPollens = async (req, res) => {
         { telegramId: user.referredBy },
         { $inc: { pollens: refrreReward } }
       );
+
+      const historyData = {
+        type: "pollens",
+        reward: refrreReward,
+        userId: telegramId,
+        refererId: user.referredBy,
+        message: "did some actions on The Hive",
+      };
+
+      const history = new History(historyData);
+      await history.save();
     }
 
     res.status(200).json({
@@ -221,9 +233,52 @@ exports.checkAndUpdateDay = async (req, res) => {
   }
 };
 
+// exports.checkAndUpdateRewardStatus = async (req, res) => {
+//   const { telegramId } = req.params;
 
+//   try {
+//     const user = await User.findOne({ telegramId });
 
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found." });
+//     }
 
+//     const now = new Date();
+//     const lastClaimed = new Date(user.lastClaimed);
+//     let claimedToday = false;
+//     if (
+//       now.getDate() === lastClaimed.getDate() &&
+//       now.getMonth() === lastClaimed.getMonth() &&
+//       now.getFullYear() === lastClaimed.getFullYear()
+//     ) {
+//       claimedToday = true;
+//     } else {
+//       if (now - lastClaimed >= 2 * 86400000) {
+//         user.day = 1;
+//         user.lastClaimed = null;
+//       } else {
+//         user.day = user.day === 7 ? 1 : (user.day % 7) + 1;
+//       }
+//       await user.save();
+//     }
+
+//     res.json({
+//       claimedToday,
+//       message: claimedToday
+//         ? "You have already claimed today's reward."
+//         : "You have not claimed today's reward yet.",
+//       day: user.day,
+//       pollens: user.pollens,
+//       lastClaimed: user.lastClaimed,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({
+//       message:
+//         "An error occurred while checking and updating the reward status.",
+//     });
+//   }
+// };
 
 exports.checkAndUpdateRewardStatus = async (req, res) => {
   const { telegramId } = req.params;
@@ -237,21 +292,21 @@ exports.checkAndUpdateRewardStatus = async (req, res) => {
 
     const now = new Date();
     const lastClaimed = new Date(user.lastClaimed);
-    let claimedToday = false;
-    if (
-      now.getDate() === lastClaimed.getDate() &&
-      now.getMonth() === lastClaimed.getMonth() &&
-      now.getFullYear() === lastClaimed.getFullYear()
-    ) {
-      claimedToday = true;
-    } else {
-  
-      if (now - lastClaimed >= 2 * 86400000) {
-        user.day = 1;
-        user.lastClaimed = null;
+
+    // Normalize both dates to midnight (ignore time portion)
+    const todayMidnight = new Date(now).setHours(0, 0, 0, 0);
+    const lastClaimedMidnight = new Date(lastClaimed).setHours(0, 0, 0, 0);
+
+    let claimedToday = todayMidnight === lastClaimedMidnight;
+
+    // Only update if a new day has started
+    if (!claimedToday) {
+      if (todayMidnight - lastClaimedMidnight >= 2 * 86400000) {
+        user.day = 1; // Missed a day, reset to day 1
       } else {
-        user.day = user.day === 7 ? 1 : (user.day % 7) + 1; 
+        user.day = user.day === 7 ? 1 : user.day + 1; // Move to the next day, reset if day 7
       }
+      user.lastClaimed = now;
       await user.save();
     }
 
@@ -266,9 +321,9 @@ exports.checkAndUpdateRewardStatus = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ message: "An error occurred while checking and updating the reward status." });
+    res.status(500).json({
+      message:
+        "An error occurred while checking and updating the reward status.",
+    });
   }
 };
-
