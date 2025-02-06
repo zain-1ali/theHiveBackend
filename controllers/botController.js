@@ -40,7 +40,6 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
       //     const fileId = photos.photos[0][0].file_id;
       //     userImage = await saveUserImage(fileId, userId);
       //   }
-
       const userData = {
         telegramId: userId,
         firstName: userFirstName,
