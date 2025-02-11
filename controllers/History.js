@@ -7,7 +7,19 @@ exports.getHistory = async (req, res) => {
       res.status(400).json({ message: "telegram uid is required" });
     }
 
-    const historyData = await History.find({ refererId: telegramId });
+    const historyData = await History.aggregate([
+      {
+        $match: { refererId: telegramId }  
+      },
+      {
+        $lookup: {
+          from: 'users',           
+          localField: 'userId',    
+          foreignField: 'telegramId',  
+          as: 'userDetails'
+        }
+      }
+    ]);
 
     if (!historyData) {
       res.status(200).json({ data: [], message: "data not found" });
