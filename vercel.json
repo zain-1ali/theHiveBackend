@@ -1,20 +1,14 @@
 {
   "version": 2,
   "functions": {
-    "api/webhook.js": {
+    "api/botController.js": {
       "maxDuration": 10
     }
   },
-  "builds": [
-    {
-      "src": "./index.js",
-      "use": "@vercel/node"
-    }
-  ],
   "routes": [
     {
-      "src": "/(.*)",
-      "dest": "/"
+      "src": "/api/botController",
+      "dest": "/api/botController.js"
     }
   ]
 }
