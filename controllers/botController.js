@@ -5,7 +5,7 @@ const { connectDb } = require("../utils/db");
 
 exports.handleUpdate = async (req, res) => {
   try {
-    await bot.processUpdate(req.body);
+    bot.processUpdate(req.body);
     res.status(200).send("OK");
   } catch (error) {
     console.error("Error in botController:", error);
@@ -30,7 +30,7 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
   const welcomeMessage = `Hi, ${userFirstName}!👋\n\nWelcome to The hive!🥳\n\nHere you can earn pollens by mining them! Invite friends to earn more coins together, and level up faster!🚀`;
 
   try {
-    let user = await User.findOne({ telegramId: userId });
+    let user = await User.findOne({ telegramId: userId }).lean();
 
     if (!user) {
       //   let userImage = null;
