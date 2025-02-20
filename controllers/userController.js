@@ -14,7 +14,7 @@ exports.userAuthenticator = async (req, res, next) => {
   };
 
   try {
-    if (!userTelegramData?.telegramId) {
+    if (!userTelegramData?.telegramId){
       return res
         .status(400)
         .json({ message: "Invalid user data", userTelegramData });
