@@ -13,6 +13,6 @@ const userSchema = new mongoose.Schema({
   day: { type: Number, default: 1 },
   dayUpdatedAt: { type: Date, default: null },
   pollens: { type: Number, default: 0 },
-});
-
-module.exports = mongoose.model("User", userSchema);
+},{timestamps: true});
+const User = mongoose.model("User", userSchema)
+module.exports = User 
