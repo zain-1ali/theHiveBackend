@@ -63,6 +63,18 @@ exports.handleSocialFollowing = catchAsyncError(async (req, res, next) => {
 
   user[`${followingPlatform}Followed`] = true;
 
+  if (followingPlatform === "tg") {
+    if (user.pollens < 100000 && user.pollens + 1000 >= 100000) {
+      user.isQueen = true;
+    }
+    user.pollens += 1000;
+  } else {
+    if (user.pollens < 100000 && user.pollens + 100 >= 100000) {
+      user.isQueen = true;
+    }
+    user.pollens += 100;
+  }
+
   if (user.xFollowed && user.fbFollowed && user.tgFollowed) {
     user.nectar += 10;
     const historyData = {
@@ -79,5 +91,24 @@ exports.handleSocialFollowing = catchAsyncError(async (req, res, next) => {
   }
   await user.save();
 
-  res.status(200).json({ message: "Social following updated successfully" });
+  const historyData = {
+    type: "pollens",
+    reward: followingPlatform === "tg" ? 1000 : 100,
+    userId: telegramId,
+    refererId: "",
+    message: `You gained pollens by ${
+      followingPlatform === "tg"
+        ? "joining hive telegram channel"
+        : followingPlatform === "fb"
+        ? "following hive facebook page"
+        : "following hive twitter account"
+    }.`,
+  };
+
+  const history = new History(historyData);
+  await history.save();
+
+  res
+    .status(200)
+    .json({ message: "Social following updated successfully", success: true });
 });

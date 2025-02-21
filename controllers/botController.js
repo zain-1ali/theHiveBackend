@@ -148,13 +148,31 @@ bot.start(async (ctx) => {
       };
 
       if (refCode) {
-        const referrer = await User.findOne({ telegramId: refCode });
-        if (referrer) {
-          const referralReward = isPremium ? 5000 : 500;
-          await User.findOneAndUpdate(
-            { telegramId: refCode },
-            { $inc: { pollens: referralReward } }
-          );
+        const refererUser = await User.findOne({ telegramId: refCode });
+        if (refererUser) {
+          const refererReward = isPremium ? 5000 : 500;
+
+          // Check and update Queen status for referer
+          if (
+            refererUser.pollens < 100000 &&
+            refererUser.pollens + refererReward >= 100000
+          ) {
+            refererUser.isQueen = true;
+          }
+
+          refererUser.pollens += refererReward;
+          await refererUser.save();
+
+          const historyData = {
+            type: "pollens",
+            reward: refererReward,
+            userId: userId,
+            refererId: refCode,
+            message: "accepted your invite",
+          };
+
+          const history = new History(historyData);
+          await history.save();
         } else {
           userData.referredBy = null;
         }
@@ -163,8 +181,6 @@ bot.start(async (ctx) => {
       user = new User(userData);
       await user.save();
     }
-
-    console.log(user);
 
     await ctx.reply(welcomeMessage, {
       reply_markup: {
