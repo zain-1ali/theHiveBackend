@@ -80,8 +80,8 @@ exports.handleSocialFollowing = catchAsyncError(async (req, res, next) => {
     const historyData = {
       type: "nectar",
       reward: 10,
-      userId: telegramId,
-      refererId: "",
+      userId: "",
+      refererId: telegramId,
       message:
         "You gained nectar by following all the social platforms of the hive.",
     };
@@ -94,8 +94,8 @@ exports.handleSocialFollowing = catchAsyncError(async (req, res, next) => {
   const historyData = {
     type: "pollens",
     reward: followingPlatform === "tg" ? 1000 : 100,
-    userId: telegramId,
-    refererId: "",
+    userId: "",
+    refererId: telegramId,
     message: `You gained pollens by ${
       followingPlatform === "tg"
         ? "joining hive telegram channel"
@@ -111,4 +111,16 @@ exports.handleSocialFollowing = catchAsyncError(async (req, res, next) => {
   res
     .status(200)
     .json({ message: "Social following updated successfully", success: true });
+});
+
+exports.getUser = catchAsyncError(async (req, res, next) => {
+  const { telegramId } = req.params;
+
+  const user = await User.findOne({ telegramId });
+
+  if (!user) {
+    next(new ErrorHandler("User not found", 404));
+  }
+
+  res.status(200).json({ user });
 });
