@@ -164,6 +164,8 @@ bot.start(async (ctx) => {
       await user.save();
     }
 
+    console.log(user);
+
     await ctx.reply(welcomeMessage, {
       reply_markup: {
         inline_keyboard: [
