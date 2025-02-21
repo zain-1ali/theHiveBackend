@@ -13,6 +13,11 @@ const userSchema = new mongoose.Schema({
   day: { type: Number, default: 1 },
   dayUpdatedAt: { type: Date, default: null },
   pollens: { type: Number, default: 0 },
-},{timestamps: true});
-const User = mongoose.model("User", userSchema)
-module.exports = User 
+  nectar: { type: Number, default: 0 },
+  xFollowed: { type: Boolean, default: false },
+  fbFollowed: { type: Boolean, default: false },
+  tgFollowed: { type: Boolean, default: false },
+  isQueen: { type: Boolean, default: false },
+});
+
+module.exports = mongoose.model("User", userSchema);

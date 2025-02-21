@@ -1,73 +1,106 @@
+const { catchAsyncError } = require("../middlewares/catchAsyncError");
 const History = require("../models/History");
 const User = require("../models/User");
 const { hasDayPassed } = require("../utils/dateHelper");
+const { ErrorHandler } = require("../utils/ErrorHandler");
 const { getPercentage } = require("../utils/returnPercentage");
 
 const rewards = [500, 550, 550, 600, 650, 650, 1000];
-exports.claimPollens = async (req, res) => {
+
+exports.claimPollens = catchAsyncError(async (req, res, next) => {
   const { telegramId } = req.body;
-  if (!telegramId)
-    return res.status(400).json({ message: "User ID is required." });
+  if (!telegramId) return next(new ErrorHandler("User ID is required.", 400));
 
-  try {
-    let user = await User.findOne({ telegramId });
-    const now = new Date();
+  let user = await User.findOne({ telegramId });
+  if (!user) {
+    return next(
+      new ErrorHandler(
+        "User not found. Please start the bot to claim pollens.",
+        404
+      )
+    );
+  }
 
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found. Please start the bot to claim pollens.",
-        success: false,
-      });
-    }
+  // Ensure 24 hours have passed before claiming again
+  if (!hasDayPassed(user.lastClaimed)) {
+    return next(
+      new ErrorHandler("You can only claim pollens once every 24 hours.", 400)
+    );
+  }
 
-    // Check if a day has passed since the last claim
-    if (!hasDayPassed(user.lastClaimed)) {
-      return res
-        .status(400)
-        .json({ message: "You can only claim pollens once every 24 hours." });
-    }
+  const now = new Date();
 
-    // Increment the day and add pollens
-    // user.day = (user.day % 7) + 1;
-    user.pollens += rewards[user.day - 1];
-    user.lastClaimed = now;
-    await user.save();
+  // Calculate today's reward
+  const reward = rewards[(user.day - 1) % 7];
 
-    if (user.referredBy) {
-      const refrreReward = user.isPremium
-        ? getPercentage(rewards[user.day - 1], 20)
-        : getPercentage(rewards[user.day - 1], 10);
-      await User.findOneAndUpdate(
-        { telegramId: user.referredBy },
-        { $inc: { pollens: refrreReward } }
-      );
+  // Check and update Queen status
+  let becomeQueen = false;
+  if (user.pollens < 100000 && user.pollens + reward >= 100000) {
+    user.isQueen = true;
+    becomeQueen = true;
+  }
 
-      const historyData = {
+  // Add pollens and update user state
+  user.pollens += reward;
+  user.day = (user.day % 7) + 1; // Increment the day
+  user.lastClaimed = now;
+
+  // Grant nectar on day 7
+  if (user.day === 7) {
+    user.nectar += 5;
+    await new History({
+      type: "nectar",
+      reward: 5,
+      userId: telegramId,
+      refererId: "",
+      message: "You gained nectar",
+    }).save();
+  }
+
+  await user.save();
+
+  // Handle referral rewards
+  if (user.referredBy) {
+    const refererUser = await User.findOne({ telegramId: user.referredBy });
+
+    if (refererUser) {
+      const refererReward = user.isPremium
+        ? getPercentage(reward, 20)
+        : getPercentage(reward, 10);
+
+      // Check and update Queen status for referer
+      if (
+        refererUser.pollens < 100000 &&
+        refererUser.pollens + refererReward >= 100000
+      ) {
+        refererUser.isQueen = true;
+      }
+
+      refererUser.pollens += refererReward;
+      await refererUser.save();
+
+      await new History({
         type: "pollens",
-        reward: refrreReward,
+        reward: refererReward,
         userId: telegramId,
         refererId: user.referredBy,
         message: "did some actions on The Hive",
-      };
-
-      const history = new History(historyData);
-      await history.save();
+      }).save();
     }
-
-    res.status(200).json({
-      message: `You have claimed ${rewards[user.day - 1]} pollens!`,
-      pollens: user.pollens,
-      claimedPollens: rewards[user.day - 1],
-      success: true,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "An error occurred while claiming pollens.",
-      success: false,
-    });
   }
-};
+
+  res.status(200).json({
+    message: `You have claimed ${reward} pollens!`,
+    queenMessage: becomeQueen
+      ? "Congratulations! You are now a Queen!"
+      : user?.isQueen
+      ? "You are a Queen!"
+      : `${100000 - user.pollens} POLLEN untill you become a queen`,
+    pollens: user.pollens,
+    claimedPollens: reward,
+    success: true,
+  });
+});
 
 exports.getProgress = async (req, res) => {
   const { telegramId } = req.params;
@@ -233,61 +266,52 @@ exports.checkAndUpdateDay = async (req, res) => {
   }
 };
 
-exports.checkAndUpdateRewardStatus = async (req, res) => {
+exports.checkAndUpdateRewardStatus = catchAsyncError(async (req, res) => {
   const { telegramId } = req.params;
+  const user = await User.findOne({ telegramId });
 
-  try {
-    const user = await User.findOne({ telegramId });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
-
-    const now = new Date();
-    const lastClaimed = new Date(user.lastClaimed);
-    const dayUpdatedAt = new Date(user.dayUpdatedAt);
-    let claimedToday = false;
-    if (
-      now.getDate() === lastClaimed.getDate() &&
-      now.getMonth() === lastClaimed.getMonth() &&
-      now.getFullYear() === lastClaimed.getFullYear()
-    ) {
-      claimedToday = true;
-    } else {
-      if (now - lastClaimed >= 2 * 86400000) {
-        user.day = 1;
-        user.dayUpdatedAt = null;
-        user.lastClaimed = null;
-      } else {
-        if (
-          now.getDate() != dayUpdatedAt.getDate() ||
-          now.getMonth() != dayUpdatedAt.getMonth() ||
-          now.getFullYear() != dayUpdatedAt.getFullYear()
-        ) {
-          user.day = user.day === 7 ? 1 : (user.day % 7) + 1;
-          user.dayUpdatedAt = now;
-        }
-      }
-      await user.save();
-    }
-
-    res.json({
-      claimedToday,
-      message: claimedToday
-        ? "You have already claimed today's reward."
-        : "You have not claimed today's reward yet.",
-      day: user.day,
-      pollens: user.pollens,
-      lastClaimed: user.lastClaimed,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message:
-        "An error occurred while checking and updating the reward status.",
-    });
+  if (!user) {
+    next(new ErrorHandler("User not found.", 404));
   }
-};
+
+  const now = new Date();
+  const lastClaimed = new Date(user.lastClaimed);
+  const dayUpdatedAt = new Date(user.dayUpdatedAt);
+  let claimedToday = false;
+  if (
+    now.getDate() === lastClaimed.getDate() &&
+    now.getMonth() === lastClaimed.getMonth() &&
+    now.getFullYear() === lastClaimed.getFullYear()
+  ) {
+    claimedToday = true;
+  } else {
+    if (now - lastClaimed >= 2 * 86400000) {
+      user.day = 1;
+      user.dayUpdatedAt = null;
+      user.lastClaimed = null;
+    } else {
+      if (
+        now.getDate() != dayUpdatedAt.getDate() ||
+        now.getMonth() != dayUpdatedAt.getMonth() ||
+        now.getFullYear() != dayUpdatedAt.getFullYear()
+      ) {
+        user.day = user.day === 7 ? 1 : (user.day % 7) + 1;
+        user.dayUpdatedAt = now;
+      }
+    }
+    await user.save();
+  }
+
+  res.json({
+    claimedToday,
+    message: claimedToday
+      ? "You have already claimed today's reward."
+      : "You have not claimed today's reward yet.",
+    day: user.day,
+    pollens: user.pollens,
+    lastClaimed: user.lastClaimed,
+  });
+});
 
 // exports.checkAndUpdateRewardStatus = async (req, res) => {
 //   const { telegramId } = req.params;

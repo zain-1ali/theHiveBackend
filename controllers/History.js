@@ -1,10 +1,11 @@
+const { catchAsyncError } = require("../middlewares/catchAsyncError");
 const History = require("../models/History");
+const { ErrorHandler } = require("../utils/ErrorHandler");
 
-exports.getHistory = async (req, res) => {
-  try {
+exports.getHistory = catchAsyncError(async (req, res,next) => {
     const { telegramId } = req.params;
     if (!telegramId) {
-      res.status(400).json({ message: "telegram uid is required" });
+      next(new ErrorHandler("telegram uid is required", 400));
     }
 
     const historyData = await History.aggregate([
@@ -13,10 +14,11 @@ exports.getHistory = async (req, res) => {
       },
       {
         $lookup: {
-          from: 'users',           
+          from: 'users',
+          
           localField: 'userId',    
           foreignField: 'telegramId',  
-          as: 'userDetails'
+          as: 'userDetails'           
         }
       }
     ]);
@@ -28,10 +30,5 @@ exports.getHistory = async (req, res) => {
     res
       .status(200)
       .json({ data: historyData, message: "data found successfuly" });
-  } catch (error) {
-    console.log(error);
-    res
-      .status(500)
-      .json({ data: historyData, message: "Something went wrong" });
-  }
-};
+  
+});
