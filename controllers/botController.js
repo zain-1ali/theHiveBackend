@@ -101,6 +101,7 @@
 const { bot } = require("../services/telegramService");
 const User = require("../models/User");
 const { connectDb } = require("../utils/db");
+const History = require("../models/History");
 
 connectDb(); // Ensure MongoDB is connected
 
