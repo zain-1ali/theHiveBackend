@@ -42,7 +42,7 @@ exports.claimPollens = catchAsyncError(async (req, res, next) => {
 
   // Add pollens and update user state
   user.pollens += reward;
-  user.day = (user.day % 7) + 1; // Increment the day
+  // user.day = (user.day % 7) + 1;
   user.lastClaimed = now;
 
   // Grant nectar on day 7
